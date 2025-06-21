@@ -1,0 +1,2 @@
+# ttcd
+cross platform pomodoro
