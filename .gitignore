@@ -1,0 +1,10 @@
+# Build artifacts
+.build/
+DerivedData/
+
+# User data
+*.xcuserstate
+
+# Logs
+pomodoro_log.json
+.DS_Store
