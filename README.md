@@ -1,24 +1,20 @@
 # ttcd
-
-A cross platform Pomodoro timer written in Python. The application provides configurable focus and break timers and records completed sessions to a JSON file. A history chart can be displayed showing the number of focus sessions per day.
+A macOS menu bar Pomodoro timer written in Swift. The app provides configurable focus and break durations, logs each completed session to `pomodoro_log.json` in your home directory and can display a history chart of focus sessions.
 
 ## Requirements
+- macOS 13+
+- Xcode 14+
 
-- Python 3.10+
-- `matplotlib` (for history chart)
+The project uses Swift Package Manager and the [swift-charts](https://github.com/apple/swift-charts) package.
 
-Install dependencies with:
-
-```bash
-pip install matplotlib
-```
-
-## Running
-
-Execute the application using Python:
+## Building
+Open the project in Xcode with:
 
 ```bash
-python3 main.py
+open Package.swift
 ```
 
-The GUI allows you to configure focus, short break and long break durations. After each timer completes a record is appended to `pomodoro_log.json`. Use the **Show History** button to display a chart of focus sessions per day.
+Build and run the `PomodoroMenuBar` target. When running, the app lives in the macOS status bar.
+
+## Usage
+Use the status bar menu to start focus or break timers. When a timer completes a notification is displayed and a record is appended to `pomodoro_log.json`. Select **Show History** from the menu to display a chart of focus sessions per day.
