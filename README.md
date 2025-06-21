@@ -1,5 +1,4 @@
 # ttcd
-
 A macOS menu bar Pomodoro timer written in Swift. The app provides configurable focus and break durations, logs each completed session to `pomodoro_log.json` in your home directory and can display a history chart of focus sessions.
 
 ## Requirements
