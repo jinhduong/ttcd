@@ -5,11 +5,13 @@ struct FocusSession: Codable {
     let userId: String
     let durationMinutes: Int
     let completedAt: Date
+    let tag: String?
     
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case userId = "user_id"
         case durationMinutes = "duration_minutes"
         case completedAt = "completed_at"
+        case tag
     }
 } 

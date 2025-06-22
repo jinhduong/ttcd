@@ -15,6 +15,17 @@
 -   macOS 13.0 or later
 -   Xcode 14.0 or later
 
+## Generating the App Icon
+
+Place your 1024×1024 PNG (e.g. a tomato 🍅) at the project root named `AppIcon-1024.png`, then run:
+
+```bash
+chmod +x scripts/generate_app_icon.sh
+./scripts/generate_app_icon.sh
+```
+
+This creates an `Icon.icns` inside `ttcd/Assets.xcassets/AppIcon.appiconset`, which Xcode will use as the app’s icon.
+
 ## Getting Started
 
 1.  Clone the repository.

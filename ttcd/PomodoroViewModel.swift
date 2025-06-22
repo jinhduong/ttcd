@@ -9,11 +9,13 @@ class PomodoroViewModel: ObservableObject {
     @Published var timeRemaining: TimeInterval = 0
     @Published var isActive: Bool = false
     @Published var shake: Int = 0
+    @Published var currentTag: String = ""
 
     // MARK: - AppStorage for Persistence
     @AppStorage("focusMinutes") var focusMinutes: Int = 25
     @AppStorage("shortBreakMinutes") var shortBreakMinutes: Int = 5
     @AppStorage("longBreakMinutes") var longBreakMinutes: Int = 15
+    @AppStorage("longBreakInterval") var longBreakInterval: Int = 4
     
     // State persistence
     @AppStorage("sessionCount") private var sessionCount: Int = 0
@@ -31,7 +33,7 @@ class PomodoroViewModel: ObservableObject {
     }
 
     var settings: Settings {
-        Settings(focusMinutes: focusMinutes, shortBreakMinutes: shortBreakMinutes, longBreakMinutes: longBreakMinutes)
+        Settings(focusMinutes: focusMinutes, shortBreakMinutes: shortBreakMinutes, longBreakMinutes: longBreakMinutes, longBreakInterval: longBreakInterval)
     }
 
     var menuBarTitle: String {
@@ -65,10 +67,10 @@ class PomodoroViewModel: ObservableObject {
         }
     }
 
-    func start() {
+func start() {
         if phase == .idle {
             // Start the first focus session
-            let (nextPhase, newSessionCount) = engine.nextPhase()
+            let (nextPhase, newSessionCount) = engine.nextPhase(settings: settings)
             self.phase = nextPhase
             self.sessionCount = newSessionCount
             self.timeRemaining = engine.duration(for: self.phase, settings: settings)
@@ -95,6 +97,7 @@ class PomodoroViewModel: ObservableObject {
         phase = .idle
         sessionCount = 0
         timeRemaining = 0
+        currentTag = ""
     }
 
     // MARK: - State Persistence
@@ -134,7 +137,7 @@ class PomodoroViewModel: ObservableObject {
         } else {
             // The timer finished while the app was closed.
             // Advance to the next phase but leave it paused.
-            let (nextPhase, newSessionCount) = engine.nextPhase()
+            let (nextPhase, newSessionCount) = engine.nextPhase(settings: settings)
             self.phase = nextPhase
             self.sessionCount = newSessionCount
             self.timeRemaining = engine.duration(for: self.phase, settings: settings)
@@ -158,14 +161,19 @@ class PomodoroViewModel: ObservableObject {
     private func advanceToNextPhase() {
         // Record the event if the completed phase was a focus session.
         if self.phase == .focus {
-            analyticsService.record(focusMinutes: self.focusMinutes)
+            analyticsService.record(focusMinutes: self.focusMinutes, tag: self.currentTag)
+            
+            // Clear the tag for the next session
+            DispatchQueue.main.async {
+                self.currentTag = ""
+            }
         }
         
         // Play sound and shake just before changing the phase
         playSound()
         triggerShake()
 
-        let (nextPhase, newSessionCount) = engine.nextPhase()
+        let (nextPhase, newSessionCount) = engine.nextPhase(settings: settings)
         self.phase = nextPhase
         self.sessionCount = newSessionCount
         self.timeRemaining = engine.duration(for: self.phase, settings: settings)

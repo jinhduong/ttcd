@@ -19,12 +19,13 @@ class AnalyticsService {
     }
     
     /// Records a completed focus session.
-    func record(focusMinutes: Int) {
+    func record(focusMinutes: Int, tag: String?) {
         let session = FocusSession(
             sessionId: UUID(),
             userId: DeviceIdentifier.getUniqueId(),
             durationMinutes: focusMinutes,
-            completedAt: Date()
+            completedAt: Date(),
+            tag: tag
         )
         
         // Save to a local file for now.
@@ -32,6 +33,134 @@ class AnalyticsService {
         
         // Send the data to Supabase.
         sendToSupabase(session: session)
+    }
+    
+    /// Fetches user statistics from Supabase
+    func fetchUserStats() async -> UserStats {
+        let userId = DeviceIdentifier.getUniqueId()
+        
+        do {
+            // Fetch all sessions for the user
+            let response: [FocusSession] = try await supabase
+                .from("focus_sessions")
+                .select()
+                .eq("user_id", value: userId)
+                .order("completed_at", ascending: false)
+                .execute()
+                .value
+            
+            return calculateStats(from: response)
+            
+        } catch {
+            print("Error fetching stats from Supabase: \(error)")
+            return UserStats.empty
+        }
+    }
+    
+    /// Calculates user statistics from session data
+    private func calculateStats(from sessions: [FocusSession]) -> UserStats {
+        guard !sessions.isEmpty else { return UserStats.empty }
+        
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // Calculate date ranges
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        let startOfMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
+        
+        // Filter sessions by time periods
+        let sessionsToday = sessions.filter { $0.completedAt >= startOfToday }
+        let sessionsThisWeek = sessions.filter { $0.completedAt >= startOfWeek }
+        let sessionsThisMonth = sessions.filter { $0.completedAt >= startOfMonth }
+        
+        // Calculate totals
+        let totalSessions = sessions.count
+        let totalFocusMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
+        let averageSessionLength = totalSessions > 0 ? Double(totalFocusMinutes) / Double(totalSessions) : 0
+        
+        // Calculate streaks
+        let (longestStreak, currentStreak) = calculateStreaks(from: sessions)
+        
+        // Calculate tag statistics
+        let tagStats = calculateTagStats(from: sessions)
+        
+        return UserStats(
+            totalSessions: totalSessions,
+            totalFocusMinutes: totalFocusMinutes,
+            averageSessionLength: averageSessionLength,
+            sessionsToday: sessionsToday.count,
+            sessionsThisWeek: sessionsThisWeek.count,
+            sessionsThisMonth: sessionsThisMonth.count,
+            longestStreak: longestStreak,
+            currentStreak: currentStreak,
+            tagStats: tagStats
+        )
+    }
+    
+    /// Calculates the longest and current streaks from session data
+    private func calculateStreaks(from sessions: [FocusSession]) -> (longest: Int, current: Int) {
+        guard !sessions.isEmpty else { return (0, 0) }
+        
+        let calendar = Calendar.current
+        let sortedSessions = sessions.sorted { $0.completedAt < $1.completedAt }
+        
+        var currentStreak = 0
+        var maxStreak = 0
+        
+        var currentDate: Date?
+        
+        for session in sortedSessions {
+            let sessionDate = calendar.startOfDay(for: session.completedAt)
+            
+            if let current = currentDate {
+                let daysBetween = calendar.dateComponents([.day], from: current, to: sessionDate).day ?? 0
+                
+                if daysBetween == 1 {
+                    // Consecutive day
+                    currentStreak += 1
+                } else if daysBetween == 0 {
+                    // Same day, don't increment streak
+                    continue
+                } else {
+                    // Gap in streak
+                    maxStreak = max(maxStreak, currentStreak)
+                    currentStreak = 1
+                }
+            } else {
+                // First session
+                currentStreak = 1
+            }
+            
+            currentDate = sessionDate
+        }
+        
+        // Check if current streak is the longest
+        maxStreak = max(maxStreak, currentStreak)
+        
+        return (maxStreak, currentStreak)
+    }
+    
+    /// Calculates tag statistics from session data
+    private func calculateTagStats(from sessions: [FocusSession]) -> [TagStats] {
+        var tagCounts: [String: (sessionCount: Int, totalMinutes: Int)] = [:]
+        
+        for session in sessions {
+            let tag = session.tag?.isEmpty == false ? session.tag! : "No Tag"
+            
+            if let existing = tagCounts[tag] {
+                tagCounts[tag] = (
+                    sessionCount: existing.sessionCount + 1,
+                    totalMinutes: existing.totalMinutes + session.durationMinutes
+                )
+            } else {
+                tagCounts[tag] = (sessionCount: 1, totalMinutes: session.durationMinutes)
+            }
+        }
+        
+        return tagCounts.map { tag, stats in
+            TagStats(tag: tag, sessionCount: stats.sessionCount, totalMinutes: stats.totalMinutes)
+        }.sorted { $0.sessionCount > $1.sessionCount }
     }
     
     private func saveLocally(session: FocusSession) {

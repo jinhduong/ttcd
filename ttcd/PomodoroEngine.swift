@@ -37,16 +37,17 @@ struct PomodoroEngine {
 
     /// Determines the next phase in the Pomodoro cycle.
     ///
-    /// The cycle is: Focus -> Short Break, repeated. After a set number of focus sessions,
+    /// The cycle is: Focus -> Short Break, repeated. After a configurable number of focus sessions,
     /// a Long Break is initiated.
     ///
+    /// - Parameter settings: The user's configured settings including long break interval.
     /// - Returns: A tuple containing the next phase and the updated session count.
-    mutating func nextPhase() -> (phase: PomodoroPhase, sessionCount: Int) {
+    mutating func nextPhase(settings: Settings) -> (phase: PomodoroPhase, sessionCount: Int) {
         switch phase {
         case .focus:
             let newSessionCount = sessionCount + 1
-            // After 3 short breaks (meaning 4 focus sessions), take a long break.
-            if newSessionCount % 4 == 0 {
+            // After the configured interval of focus sessions, take a long break.
+            if newSessionCount % settings.longBreakInterval == 0 {
                 phase = .longBreak
             } else {
                 phase = .shortBreak
@@ -73,4 +74,5 @@ struct Settings {
     var focusMinutes: Int
     var shortBreakMinutes: Int
     var longBreakMinutes: Int
+    var longBreakInterval: Int
 } 
