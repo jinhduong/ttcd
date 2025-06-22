@@ -23,11 +23,11 @@ struct ContentView: View {
     private let teal = Color(red: 0.3, green: 0.6, blue: 0.6)
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 32) {
             HStack {
                 Spacer()
-
-                HStack(spacing: 7) {
+                HStack(spacing: 16) {
+                    Spacer()
                     Button(action: { viewModel.reset() }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.title2)
@@ -75,7 +75,7 @@ struct ContentView: View {
                 }
             })
         )
-        .cornerRadius(12)
+        .cornerRadius(0)
         .shadow(radius: 10)
         .frame(width: 320, height: 420)
         .sheet(isPresented: $showSettings) {
