@@ -24,6 +24,7 @@ class PomodoroViewModel: ObservableObject {
     // MARK: - Private Properties
     private var engine = PomodoroEngine()
     private var timerSubscription: AnyCancellable?
+    private let analyticsService = AnalyticsService()
 
     var totalDuration: TimeInterval {
         engine.duration(for: phase, settings: settings)
@@ -155,6 +156,11 @@ class PomodoroViewModel: ObservableObject {
     }
 
     private func advanceToNextPhase() {
+        // Record the event if the completed phase was a focus session.
+        if self.phase == .focus {
+            analyticsService.record(focusMinutes: self.focusMinutes)
+        }
+        
         // Play sound and shake just before changing the phase
         playSound()
         triggerShake()

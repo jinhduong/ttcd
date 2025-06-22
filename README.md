@@ -1,20 +1,24 @@
-# ttcd
-A macOS menu bar Pomodoro timer written in Swift. The app provides configurable focus and break durations, logs each completed session to `pomodoro_log.json` in your home directory and can display a history chart of focus sessions.
+# ttcd: The Simple, Focused Pomodoro Timer
+
+**ttcd** is a minimalist Pomodoro timer designed for the macOS menu bar. It's built for developers, designers, and anyone who wants to improve their focus without the clutter of complex apps. Stay on task, take meaningful breaks, and keep your session history synced effortlessly.
+
+## Features
+
+-   **Simple & Clean**: Lives in your menu bar, staying out of your way until you need it.
+-   **Cloud-Synced Stats**: Your session history is automatically saved, providing insights into your work patterns from anywhere.
+-   **Configurable Timers**: Easily adjust the duration for your focus, short break, and long break intervals.
+-   **Keyboard First**: Start and stop the timer instantly with the **Space Bar**.
+-   **Instant Notifications**: Get a clear notification when it's time to switch tasks.
 
 ## Requirements
-- macOS 13+
-- Xcode 14+
 
-The project uses Swift Package Manager and the [swift-charts](https://github.com/apple/swift-charts) package.
+-   macOS 13.0 or later
+-   Xcode 14.0 or later
 
-## Building
-Open the project in Xcode with:
+## Getting Started
 
-```bash
-open Package.swift
-```
+1.  Clone the repository.
+2.  Open `ttcd.xcodeproj` in Xcode.
+3.  Press `Cmd+R` to build and run.
 
-Build and run the `PomodoroMenuBar` target. When running, the app lives in the macOS status bar.
-
-## Usage
-Use the status bar menu to start focus or break timers. When a timer completes a notification is displayed and a record is appended to `pomodoro_log.json`. Select **Show History** from the menu to display a chart of focus sessions per day.
+The app will appear as a 🍅 icon in your macOS menu bar. Click it to start your first focus session!
