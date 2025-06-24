@@ -37,3 +37,17 @@ This creates an `Icon.icns` inside `ttcd/Assets.xcassets/AppIcon.appiconset`, wh
 3.  Press `Cmd+R` to build and run.
 
 The app will appear as a 🍅 icon in your macOS menu bar. Click it to start your first focus session!
+
+## Configuration
+
+`ttcd` uses Supabase for storing session history. To keep your API
+credentials out of the source code, the app reads them from environment
+variables at runtime:
+
+```bash
+export SUPABASE_URL="https://your-project.supabase.co"
+export SUPABASE_KEY="your-anon-key"
+```
+
+You can set these in your shell profile or add them to an `.env` file and
+load it with your preferred tool when developing locally.

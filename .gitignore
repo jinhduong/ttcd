@@ -1,0 +1,21 @@
+# Xcode
+DerivedData/
+*.xcworkspace
+*.xcuserdata
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+build/
+*.xcresult
+
+# Swift Package Manager
+.build/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Env files
+.env

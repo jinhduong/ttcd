@@ -7,11 +7,17 @@ class AnalyticsService {
     private let supabase: SupabaseClient
     
     init() {
-        // --- PASTE YOUR CREDENTIALS HERE ---
-        let supabaseURL = URL(string: "https://dlfrbzefsnnesrujtsre.supabase.co")!
-        let supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsZnJiemVmc25uZXNydWp0c3JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1Njg5NDUsImV4cCI6MjA2NjE0NDk0NX0.Rvs5_NQbwCzo9omkjJhh608BiJjYXusYPxiAkb9FVh4"
-        
-        self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: supabaseKey)
+        let env = ProcessInfo.processInfo.environment
+
+        guard
+            let urlString = env["SUPABASE_URL"],
+            let key = env["SUPABASE_KEY"],
+            let supabaseURL = URL(string: urlString)
+        else {
+            fatalError("SUPABASE_URL and SUPABASE_KEY must be set in the environment")
+        }
+
+        self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: key)
         
         // Store the log file in the user's home directory.
         let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
