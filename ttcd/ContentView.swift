@@ -74,6 +74,7 @@ struct ContentView: View {
                     handleTimerButtonPress()
                 }
             })
+            .id("keyListener-\(showTagInput)") // Force refresh when tag input state changes
         )
         .cornerRadius(0)
         .shadow(radius: 10)
@@ -202,6 +203,15 @@ struct ContentView: View {
     private func hideTagInput() {
         showTagInput = false
         tagInputText = ""
+        
+        // Restore first responder to key listener after hiding tag input
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Find the KeyEventListenerView's NSView and make it first responder
+            if let window = NSApp.keyWindow {
+                window.makeFirstResponder(nil) // Clear current first responder
+                // The KeyEventListenerView will re-establish itself as first responder
+            }
+        }
     }
     
     private func handleTimerButtonPress() {

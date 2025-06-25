@@ -18,7 +18,17 @@ struct KeyEventListenerView: NSViewRepresentable {
         return view
     }
     
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {
+        // Re-establish first responder status when the view updates
+        // This helps restore focus after overlays disappear
+        if let keyView = nsView as? KeyListeningNSView {
+            DispatchQueue.main.async {
+                if nsView.window?.firstResponder != nsView {
+                    nsView.window?.makeFirstResponder(nsView)
+                }
+            }
+        }
+    }
     
     // The custom NSView that does the actual key listening.
     class KeyListeningNSView: NSView {

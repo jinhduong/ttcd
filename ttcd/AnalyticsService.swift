@@ -8,16 +8,31 @@ class AnalyticsService {
     
     init() {
         let env = ProcessInfo.processInfo.environment
-
-        guard
-            let urlString = env["SUPABASE_URL"],
-            let key = env["SUPABASE_KEY"],
-            let supabaseURL = URL(string: urlString)
-        else {
-            fatalError("SUPABASE_URL and SUPABASE_KEY must be set in the environment")
+        
+        // Try to get from environment variables first
+        var urlString: String?
+        var key: String?
+        
+        if let envUrl = env["SUPABASE_URL"], let envKey = env["SUPABASE_KEY"] {
+            urlString = envUrl
+            key = envKey
+        } else {
+            // Fallback to Info.plist configuration
+            if let infoPlist = Bundle.main.infoDictionary {
+                urlString = infoPlist["SUPABASE_URL"] as? String
+                key = infoPlist["SUPABASE_KEY"] as? String
+            }
         }
 
-        self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: key)
+        guard
+            let finalUrlString = urlString,
+            let finalKey = key,
+            let supabaseURL = URL(string: finalUrlString)
+        else {
+            fatalError("SUPABASE_URL and SUPABASE_KEY must be set in environment variables or Info.plist")
+        }
+
+        self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: finalKey)
         
         // Store the log file in the user's home directory.
         let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
