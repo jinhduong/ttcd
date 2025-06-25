@@ -9,6 +9,13 @@ class AnalyticsService {
     init() {
         let env = ProcessInfo.processInfo.environment
         
+        // Debug: Print available environment variables (remove in production)
+        #if DEBUG
+        print("🔧 [DEBUG] Available environment variables:")
+        print("   SUPABASE_URL: \(env["SUPABASE_URL"] != nil ? "✅ Set" : "❌ Not set")")
+        print("   SUPABASE_KEY: \(env["SUPABASE_KEY"] != nil ? "✅ Set" : "❌ Not set")")
+        #endif
+        
         // Try to get from environment variables first
         var urlString: String?
         var key: String?
@@ -16,11 +23,17 @@ class AnalyticsService {
         if let envUrl = env["SUPABASE_URL"], let envKey = env["SUPABASE_KEY"] {
             urlString = envUrl
             key = envKey
+            #if DEBUG
+            print("🔧 [DEBUG] Using environment variables")
+            #endif
         } else {
             // Fallback to Info.plist configuration
             if let infoPlist = Bundle.main.infoDictionary {
                 urlString = infoPlist["SUPABASE_URL"] as? String
                 key = infoPlist["SUPABASE_KEY"] as? String
+                #if DEBUG
+                print("🔧 [DEBUG] Using Info.plist configuration")
+                #endif
             }
         }
 
@@ -31,6 +44,10 @@ class AnalyticsService {
         else {
             fatalError("SUPABASE_URL and SUPABASE_KEY must be set in environment variables or Info.plist")
         }
+
+        #if DEBUG
+        print("🔧 [DEBUG] Supabase initialized with URL: \(finalUrlString)")
+        #endif
 
         self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: finalKey)
         
