@@ -19,3 +19,6 @@ Carthage/Build/
 
 # Env files
 .env
+
+# Configuration files with sensitive data
+Config.xcconfig
