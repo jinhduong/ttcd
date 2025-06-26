@@ -1,59 +1,22 @@
 import Foundation
-import Supabase
 
 class AnalyticsService {
     
     private let fileURL: URL
-    private let supabase: SupabaseClient
     
     init() {
-        let env = ProcessInfo.processInfo.environment
+        // Store the log file in the user's Application Support directory for better organization
+        let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appDirectory = appSupportURL.appendingPathComponent("ttcd")
         
-        // Debug: Print available environment variables (remove in production)
+        // Create the directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: appDirectory, withIntermediateDirectories: true)
+        
+        self.fileURL = appDirectory.appendingPathComponent("sessions.json")
+        
         #if DEBUG
-        print("🔧 [DEBUG] Available environment variables:")
-        print("   SUPABASE_URL: \(env["SUPABASE_URL"] != nil ? "✅ Set" : "❌ Not set")")
-        print("   SUPABASE_KEY: \(env["SUPABASE_KEY"] != nil ? "✅ Set" : "❌ Not set")")
+        print("📁 [DEBUG] Sessions stored at: \(fileURL.path)")
         #endif
-        
-        // Try to get from environment variables first
-        var urlString: String?
-        var key: String?
-        
-        if let envUrl = env["SUPABASE_URL"], let envKey = env["SUPABASE_KEY"] {
-            urlString = envUrl
-            key = envKey
-            #if DEBUG
-            print("🔧 [DEBUG] Using environment variables")
-            #endif
-        } else {
-            // Fallback to Info.plist configuration
-            if let infoPlist = Bundle.main.infoDictionary {
-                urlString = infoPlist["SUPABASE_URL"] as? String
-                key = infoPlist["SUPABASE_KEY"] as? String
-                #if DEBUG
-                print("🔧 [DEBUG] Using Info.plist configuration")
-                #endif
-            }
-        }
-
-        guard
-            let finalUrlString = urlString,
-            let finalKey = key,
-            let supabaseURL = URL(string: finalUrlString)
-        else {
-            fatalError("SUPABASE_URL and SUPABASE_KEY must be set in environment variables or Info.plist")
-        }
-
-        #if DEBUG
-        print("🔧 [DEBUG] Supabase initialized with URL: \(finalUrlString)")
-        #endif
-
-        self.supabase = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: finalKey)
-        
-        // Store the log file in the user's home directory.
-        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
-        self.fileURL = homeDirectory.appendingPathComponent(".ttcd_sessions.jsonl")
     }
     
     /// Records a completed focus session.
@@ -66,32 +29,56 @@ class AnalyticsService {
             tag: tag
         )
         
-        // Save to a local file for now.
+        // Save to local file
         saveLocally(session: session)
-        
-        // Send the data to Supabase.
-        sendToSupabase(session: session)
     }
     
-    /// Fetches user statistics from Supabase
+    /// Fetches user statistics from local storage
     func fetchUserStats() async -> UserStats {
-        let userId = DeviceIdentifier.getUniqueId()
+        let sessions = loadLocalSessions()
+        return calculateStats(from: sessions)
+    }
+    
+    /// Loads all sessions from local storage
+    private func loadLocalSessions() -> [FocusSession] {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return []
+        }
         
         do {
-            // Fetch all sessions for the user
-            let response: [FocusSession] = try await supabase
-                .from("focus_sessions")
-                .select()
-                .eq("user_id", value: userId)
-                .order("completed_at", ascending: false)
-                .execute()
-                .value
-            
-            return calculateStats(from: response)
-            
+            let data = try Data(contentsOf: fileURL)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let sessions = try decoder.decode([FocusSession].self, from: data)
+            return sessions
         } catch {
-            print("Error fetching stats from Supabase: \(error)")
-            return UserStats.empty
+            print("Error loading local sessions: \(error)")
+            return []
+        }
+    }
+    
+    /// Saves a session to local storage
+    private func saveLocally(session: FocusSession) {
+        var sessions = loadLocalSessions()
+        sessions.append(session)
+        
+        // Keep only the last 1000 sessions to prevent the file from growing too large
+        if sessions.count > 1000 {
+            sessions = Array(sessions.suffix(1000))
+        }
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(sessions)
+            try data.write(to: fileURL)
+            
+            #if DEBUG
+            print("💾 Session saved locally. Total sessions: \(sessions.count)")
+            #endif
+        } catch {
+            print("Error saving session locally: \(error)")
         }
     }
     
@@ -143,38 +130,50 @@ class AnalyticsService {
         let calendar = Calendar.current
         let sortedSessions = sessions.sorted { $0.completedAt < $1.completedAt }
         
+        // Group sessions by day
+        var sessionsByDay: [Date: [FocusSession]] = [:]
+        for session in sortedSessions {
+            let day = calendar.startOfDay(for: session.completedAt)
+            sessionsByDay[day, default: []].append(session)
+        }
+        
+        let daysWithSessions = sessionsByDay.keys.sorted()
+        
         var currentStreak = 0
         var maxStreak = 0
+        var tempStreak = 0
         
-        var currentDate: Date?
-        
-        for session in sortedSessions {
-            let sessionDate = calendar.startOfDay(for: session.completedAt)
+        for i in 0..<daysWithSessions.count {
+            let currentDay = daysWithSessions[i]
             
-            if let current = currentDate {
-                let daysBetween = calendar.dateComponents([.day], from: current, to: sessionDate).day ?? 0
+            if i == 0 {
+                tempStreak = 1
+            } else {
+                let previousDay = daysWithSessions[i - 1]
+                let daysBetween = calendar.dateComponents([.day], from: previousDay, to: currentDay).day ?? 0
                 
                 if daysBetween == 1 {
                     // Consecutive day
-                    currentStreak += 1
-                } else if daysBetween == 0 {
-                    // Same day, don't increment streak
-                    continue
+                    tempStreak += 1
                 } else {
                     // Gap in streak
-                    maxStreak = max(maxStreak, currentStreak)
-                    currentStreak = 1
+                    maxStreak = max(maxStreak, tempStreak)
+                    tempStreak = 1
                 }
-            } else {
-                // First session
-                currentStreak = 1
             }
-            
-            currentDate = sessionDate
         }
         
-        // Check if current streak is the longest
-        maxStreak = max(maxStreak, currentStreak)
+        // Update max streak with the final temp streak
+        maxStreak = max(maxStreak, tempStreak)
+        
+        // Calculate current streak (from today backwards)
+        let today = calendar.startOfDay(for: Date())
+        var checkDate = today
+        
+        while sessionsByDay[checkDate] != nil {
+            currentStreak += 1
+            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate) ?? checkDate
+        }
         
         return (maxStreak, currentStreak)
     }
@@ -201,37 +200,56 @@ class AnalyticsService {
         }.sorted { $0.sessionCount > $1.sessionCount }
     }
     
-    private func saveLocally(session: FocusSession) {
+    /// Exports all session data as JSON (useful for backup)
+    func exportSessionsData() -> Data? {
+        let sessions = loadLocalSessions()
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        
-        guard let data = try? encoder.encode(session) else { return }
-        
-        // Append the new session as a new line in the file.
-        if let dataWithNewline = (String(data: data, encoding: .utf8)! + "\n").data(using: .utf8) {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                if let fileHandle = try? FileHandle(forWritingTo: fileURL) {
-                    fileHandle.seekToEndOfFile()
-                    fileHandle.write(dataWithNewline)
-                    fileHandle.closeFile()
-                }
-            } else {
-                try? dataWithNewline.write(to: fileURL)
-            }
+        encoder.outputFormatting = .prettyPrinted
+        return try? encoder.encode(sessions)
+    }
+    
+    /// Imports session data from JSON (useful for restore)
+    func importSessionsData(_ data: Data) -> Bool {
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let importedSessions = try decoder.decode([FocusSession].self, from: data)
+            
+            // Merge with existing sessions and remove duplicates
+            var existingSessions = loadLocalSessions()
+            let existingIds = Set(existingSessions.map { $0.sessionId })
+            
+            let newSessions = importedSessions.filter { !existingIds.contains($0.sessionId) }
+            existingSessions.append(contentsOf: newSessions)
+            
+            // Sort by completion date
+            existingSessions.sort { $0.completedAt < $1.completedAt }
+            
+            // Save merged data
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            let mergedData = try encoder.encode(existingSessions)
+            try mergedData.write(to: fileURL)
+            
+            print("Successfully imported \(newSessions.count) new sessions")
+            return true
+        } catch {
+            print("Error importing sessions: \(error)")
+            return false
         }
     }
     
-    private func sendToSupabase(session: FocusSession) {
-        Task {
-            do {
-                try await supabase
-                    .from("focus_sessions")
-                    .insert(session)
-                    .execute()
-                print("Successfully saved session to Supabase.")
-            } catch {
-                print("Error saving to Supabase: \(error)")
+    /// Clears all local session data (useful for testing or reset)
+    func clearAllData() {
+        do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(at: fileURL)
+                print("All session data cleared")
             }
+        } catch {
+            print("Error clearing data: \(error)")
         }
     }
 } 

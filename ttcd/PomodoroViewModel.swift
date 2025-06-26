@@ -10,6 +10,8 @@ class PomodoroViewModel: ObservableObject {
     @Published var isActive: Bool = false
     @Published var shake: Int = 0
     @Published var currentTag: String = ""
+    @Published var isFlickering: Bool = false
+    @Published var flickerState: Int = 0
 
     // MARK: - AppStorage for Persistence
     @AppStorage("focusMinutes") var focusMinutes: Int = 25
@@ -26,7 +28,10 @@ class PomodoroViewModel: ObservableObject {
     // MARK: - Private Properties
     private var engine = PomodoroEngine()
     private var timerSubscription: AnyCancellable?
+    private var flickerSubscription: AnyCancellable?
+    private var flickerCount = 0
     private let analyticsService = AnalyticsService()
+    private let notificationService = NotificationService.shared
 
     var totalDuration: TimeInterval {
         engine.duration(for: phase, settings: settings)
@@ -44,6 +49,10 @@ class PomodoroViewModel: ObservableObject {
         }
     }
     
+    var menuBarColor: Color {
+        return (isFlickering && flickerState % 2 == 1) ? .red : .primary
+    }
+    
     var formattedTime: String {
         let minutes = Int(timeRemaining) / 60
         let seconds = Int(timeRemaining) % 60
@@ -56,6 +65,9 @@ class PomodoroViewModel: ObservableObject {
         
         // This notification is a reliable way to save state before the app quits.
         NotificationCenter.default.addObserver(self, selector: #selector(appWillTerminate), name: NSApplication.willTerminateNotification, object: nil)
+        
+        // Listen for notification responses to auto-start next session
+        NotificationCenter.default.addObserver(self, selector: #selector(startNextSessionFromNotification), name: .startNextSession, object: nil)
     }
 
     // MARK: - Timer Control
@@ -67,7 +79,10 @@ class PomodoroViewModel: ObservableObject {
         }
     }
 
-func start() {
+    func start() {
+        // Stop flickering when starting a new session
+        stopFlickering()
+        
         if phase == .idle {
             // Start the first focus session
             let (nextPhase, newSessionCount) = engine.nextPhase(settings: settings)
@@ -93,6 +108,7 @@ func start() {
 
     func reset() {
         pause()
+        stopFlickering()
         engine.reset()
         phase = .idle
         sessionCount = 0
@@ -100,10 +116,62 @@ func start() {
         currentTag = ""
     }
 
+    // MARK: - Flickering Animation
+    
+    private func startFlickering() {
+        guard !isFlickering else { return }
+        
+        print("🔴 Starting red flickering animation")
+        isFlickering = true
+        flickerCount = 0
+        flickerState = 0
+        
+        // Flicker for 10 seconds with 0.5 second intervals
+        let maxFlickers = 20 // 10 seconds at 0.5 second intervals
+        
+        flickerSubscription = Timer.publish(every: 0.5, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                
+                self.flickerCount += 1
+                
+                // Stop after maximum flickers
+                if self.flickerCount >= maxFlickers {
+                    self.stopFlickering()
+                    return
+                }
+                
+                // Toggle the flicker state to trigger color change
+                self.flickerState += 1
+            }
+    }
+    
+    private func stopFlickering() {
+        guard isFlickering || flickerSubscription != nil else { return }
+        
+        print("🔴 Stopping red flickering animation")
+        isFlickering = false
+        flickerCount = 0
+        flickerState = 0
+        flickerSubscription?.cancel()
+        flickerSubscription = nil
+    }
+
+    // MARK: - Notification Handlers
+    
+    @objc private func startNextSessionFromNotification() {
+        DispatchQueue.main.async {
+            self.start()
+        }
+    }
+
     // MARK: - State Persistence
     
     /// Saves the current timer state to AppStorage just before the app quits.
     @objc func appWillTerminate() {
+        stopFlickering()
+        
         if isActive {
             phaseOnExitRaw = phase.rawValue
             timeRemainingOnExit = timeRemaining
@@ -159,6 +227,8 @@ func start() {
     }
 
     private func advanceToNextPhase() {
+        let completedPhase = self.phase
+        
         // Record the event if the completed phase was a focus session.
         if self.phase == .focus {
             analyticsService.record(focusMinutes: self.focusMinutes, tag: self.currentTag)
@@ -177,6 +247,12 @@ func start() {
         self.phase = nextPhase
         self.sessionCount = newSessionCount
         self.timeRemaining = engine.duration(for: self.phase, settings: settings)
+        
+        // Start flickering red animation to get attention
+        startFlickering()
+        
+        // Show notification popup to get user's attention
+        notificationService.showSessionCompleteNotification(completedPhase: completedPhase, nextPhase: nextPhase)
         
         // After advancing, pause the timer and wait for the user to explicitly start the next phase.
         pause()

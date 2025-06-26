@@ -9,7 +9,7 @@ class StatsViewModel: ObservableObject {
     
     private let analyticsService = AnalyticsService()
     
-    /// Loads user statistics from Supabase
+    /// Loads user statistics from local storage
     func loadStats() {
         Task {
             isLoading = true

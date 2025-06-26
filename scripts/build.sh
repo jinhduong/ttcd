@@ -23,11 +23,9 @@ else
     echo -e "${YELLOW}⚠️  No .env file found. Using system environment variables or Xcode scheme.${NC}"
 fi
 
-# Verify environment variables
-if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
-    echo -e "${YELLOW}⚠️  SUPABASE_URL or SUPABASE_KEY not set in environment.${NC}"
-    echo -e "${BLUE}ℹ️  App will use Xcode scheme environment variables or Info.plist fallback.${NC}"
-fi
+# Note about local storage
+echo -e "${GREEN}📁 Using local storage for session data${NC}"
+echo -e "${GREEN}   Data will be stored in ~/Library/Application Support/ttcd/${NC}"
 
 # Default to build if no argument provided
 ACTION=${1:-build}

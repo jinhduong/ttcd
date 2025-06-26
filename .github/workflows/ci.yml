@@ -9,10 +9,6 @@ jobs:
   build:
     runs-on: macos-latest
     
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-    
     steps:
       - uses: actions/checkout@v4
       
@@ -37,9 +33,6 @@ jobs:
             -scheme ttcd \
             -destination 'platform=macOS' \
             clean build test
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
       - name: Archive App
         if: github.ref == 'refs/heads/main'
@@ -50,9 +43,6 @@ jobs:
             -destination 'platform=macOS' \
             -archivePath build/ttcd.xcarchive \
             archive
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
       - name: Export App
         if: github.ref == 'refs/heads/main'

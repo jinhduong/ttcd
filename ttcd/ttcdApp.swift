@@ -20,6 +20,7 @@ struct ttcdApp: App {
         } label: {
             Text(viewModel.menuBarTitle)
                 .font(.system(.body).monospacedDigit())
+                .foregroundColor(viewModel.menuBarColor)
         }
         .menuBarExtraStyle(.window)
         

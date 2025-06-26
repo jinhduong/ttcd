@@ -22,3 +22,4 @@ Carthage/Build/
 
 # Configuration files with sensitive data
 Config.xcconfig
+ttcd/Info.plist
