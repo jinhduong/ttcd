@@ -3,135 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ttcd: The Simple, Focused Pomodoro Timer for macOS</title>
+    <title>ttcd - Simple Pomodoro Timer</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <div class="container">
             <div class="logo">ttcd</div>
             <nav>
-                <a href="https://github.com/jinhduong/ttcd" target="_blank">View on GitHub</a>
+                <a href="https://github.com/jinhduong/ttcd/releases" target="_blank" class="btn-download">Download</a>
             </nav>
         </div>
     </header>
 
     <main>
-        <section class="hero">
-            <div class="container hero-container">
-                <div class="hero-text">
-                    <h1>The Simple, Focused Pomodoro Timer</h1>
-                    <p class="subtitle">A minimalist Pomodoro timer for the macOS menu bar. Stay on task, take meaningful breaks, and track your progress locally with complete privacy.</p>
-                    <a href="https://github.com/jinhduong/ttcd/releases" target="_blank" class="cta-button">Download Latest Version</a>
-                </div>
-                <div class="hero-image">
-                    <img src="app_screenshot.png" alt="ttcd App Screenshot" class="screenshot">
-                </div>
-            </div>
-        </section>
-
-        <section class="video-section">
+        <!-- Hero Section -->
+        <section class="section">
             <div class="container">
-                <h2>See ttcd in Action</h2>
-                <div class="video-container">
-                    <video controls autoplay poster="app_screenshot.png" preload="metadata">
-                        <source src="app_demo.mp4" type="video/mp4">
-                        <source src="app_demo.webm" type="video/webm">
-                        Your browser doesn't support video playback. <a href="ttcd-demo.mp4">Download the video</a> to see ttcd in action.
-                    </video>
+                <div class="section-content">
+                    <div class="text-content">
+                        <h1>Boost Your Focus with Our Simple Pomodoro Timer</h1>
+                        <p>A minimalist macOS menu bar app that helps you stay productive. Press spacebar to start, get gentle notifications, and track your progress without distractions.</p>
+                        <a href="https://github.com/jinhduong/ttcd/releases" target="_blank" class="btn-primary">Get Started</a>
+                    </div>
+                    <div class="image-content">
+                        <img src="app_screenshot.png" alt="ttcd App Interface">
+                    </div>
                 </div>
-                <p class="video-description">Watch how ttcd seamlessly integrates into your workflow with its clean menu bar interface, keyboard shortcuts, and session tracking.</p>
             </div>
         </section>
 
-        <section class="features">
+        <!-- Notifications Section -->
+        <section class="section section-alt">
             <div class="container">
-                <h2>Features</h2>
-                <div class="feature-grid">
-                    <div class="feature-item">
-                        <h3>Simple & Clean</h3>
-                        <p>Lives in your menu bar, staying out of your way until you need it.</p>
+                <div class="section-content reverse">
+                    <div class="text-content">
+                        <h2>Never Miss a Break with Smart Notifications</h2>
+                        <p>Get native macOS notifications when your focus sessions end. Quick action buttons let you start the next session or take more time when you need it.</p>
                     </div>
-                    <div class="feature-item">
-                        <h3>Local Progress Tracking</h3>
-                        <p>Your session history is stored locally on your machine for complete privacy and instant access.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Configurable Timers</h3>
-                        <p>Easily adjust the duration for your focus, short break, and long break intervals.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Keyboard First</h3>
-                        <p>Start, pause, and tag your sessions instantly with keyboard shortcuts.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Session Tagging</h3>
-                        <p>Tag your focus sessions to keep track of what you're working on.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Smart Notifications</h3>
-                        <p>Native macOS notifications and visual alerts keep you informed when sessions complete.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Privacy Focused</h3>
-                        <p>No accounts, no cloud services - your data stays on your machine.</p>
+                    <div class="image-content">
+                        <img src="app_notifs.png" alt="Smart Notifications">
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="showcase-section">
-            <div class="container showcase-container">
-                <div class="showcase-text">
-                    <h2>Track Your Progress Locally</h2>
-                    <p>Review your session history with a clean and simple stats view. All data is stored locally in JSON format for complete privacy, instant access, and easy backup. See your total focus time, session counts, and streaks to understand your work patterns and stay motivated.</p>
-                    <div class="privacy-note">
-                        <strong>🔒 Your Privacy Matters:</strong> No data leaves your machine. No accounts required. Your productivity data stays completely private.
+        <!-- Stats Section -->
+        <section class="section">
+            <div class="container">
+                <div class="section-content">
+                    <div class="text-content">
+                        <h2>Track Your Progress Privately</h2>
+                        <p>See your productivity patterns with clean statistics. All data stays on your Mac - no accounts, no cloud sync, complete privacy and control over your information.</p>
                     </div>
-                </div>
-                <div class="showcase-image">
-                    <img src="app_stats.png" alt="App Stats View">
+                    <div class="image-content">
+                        <img src="app_stats.png" alt="Progress Statistics">
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="showcase-section alt">
-            <div class="container showcase-container">
-                <div class="showcase-image">
-                    <img src="app_settings.png" alt="App Settings View">
-                </div>
-                <div class="showcase-text">
-                    <h2>Customize Your Flow</h2>
-                    <p>Easily adjust the duration for your focus, short break, and long break intervals. The settings are simple to configure and update instantly.</p>
+        <!-- Settings Section -->
+        <section class="section section-alt">
+            <div class="container">
+                <div class="section-content reverse">
+                    <div class="text-content">
+                        <h2>Customize Your Experience with Flexible Settings</h2>
+                        <p>Adjust focus and break durations to match your workflow. Simple, clean settings that get out of your way so you can focus on what truly matters.</p>
+                    </div>
+                    <div class="image-content">
+                        <img src="app_settings.png" alt="App Settings">
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="showcase-section">
-            <div class="container showcase-container">
-                <div class="showcase-text">
-                    <h2>Smart Notifications</h2>
-                    <p>Never miss a session transition with ttcd's intelligent notification system. Get notified when your focus sessions or breaks are complete, with options to start the next session immediately or take more time when you need it.</p>
-                    <div class="feature-highlights">
-                        <div class="highlight-item">
-                            <strong>🔔 System Notifications:</strong> Native macOS notifications that work even when the app is in the background
-                        </div>
-                        <div class="highlight-item">
-                            <strong>📱 Interactive Alerts:</strong> Quick action buttons to start your next session or take a longer break
-                        </div>
-                        <div class="highlight-item">
-                            <strong>🎯 Context Aware:</strong> Different notifications for focus sessions and break completions
-                        </div>
-                        <div class="highlight-item">
-                            <strong>⚡ Menu Bar Alerts:</strong> Visual flickering indicator when sessions complete for immediate awareness
-                        </div>
-                    </div>
-                </div>
-                <div class="showcase-image">
-                    <img src="app_notifs.png" alt="ttcd Notification System">
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Ready to transform your productivity?</h2>
+                    <p>Download ttcd and start your first focused session in seconds.</p>
                 </div>
             </div>
         </section>
@@ -139,7 +94,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 ttcd. All rights reserved. View the project on <a href="https://github.com/jinhduong/ttcd" target="_blank">GitHub</a>.</p>
+            <p>Open source • Privacy first • Made for macOS</p>
         </div>
     </footer>
 </body>
